@@ -1,0 +1,45 @@
+---
+import { contentfulClient } from "@lib/contentful";
+import type { BlogPost } from "@lib/contentful";
+import { documentToHtmlString } from "@contentful/rich-text-html-renderer";
+
+export async function getStaticPaths() {
+  const entries = await contentfulClient.getEntries<BlogPost>({
+    content_type: "blogPost",
+  });
+
+  console.log(typeof entries.items[0].fields.body);
+  try {
+    const text = await documentToHtmlString(entries.items[0].fields.richbody);
+    console.log(text);
+  } catch (e) {
+    console.error("error rendering", e);
+  }
+  const pages = entries.items.map((item) => ({
+    params: { slug: item.fields.slug },
+    props: {
+      title: item.fields.title,
+      body: documentToHtmlString(item.fields.richbody),
+      content: item.fields.content,
+      publishDate: new Date(item.fields.publishDate).toLocaleDateString(),
+    },
+  }));
+  return pages;
+}
+
+const { body, title, publishDate, content } = Astro.props;
+console.log(`content: ${content}`);
+console.log(`body: ${body}`);
+console.log(`title: ${title}`);
+---
+
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+    <h1>{title}</h1>
+    <time>{publishDate}</time>
+    <article set:html={body} />
+  </body>
+</html>

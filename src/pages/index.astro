@@ -1,0 +1,95 @@
+---
+import { contentfulClient } from "@lib/contentful";
+import type { BlogPost } from "@lib/contentful";
+
+const entries = await contentfulClient.getEntries<BlogPost>({
+  content_type: "blogPost",
+});
+
+const tags = await contentfulClient.getTags();
+console.log(`tags: ${JSON.stringify(tags, null, 2)}`);
+
+const firstEntry = entries.items[0].fields;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Astro</title>
+  </head>
+  <body>
+    <h1>My Contentful Blog</h1>
+    <section class="first">
+      <h2>
+        <a href={`/posts/${firstEntry.slug}`}>{firstEntry.title}</a>
+      </h2>
+      <p>by: {firstEntry.author[0]}</p>
+      <p>
+        published on:{" "}
+        {new Date(firstEntry.publishDate).toLocaleDateString()}
+      </p>
+      <a href={`/posts/${firstEntry.slug}`}>Continue reading »</a>
+    </section>
+    <div class="columns">
+      {
+        entries.items
+          .slice(1, entries.items.length)
+          .reverse()
+          .map((item) => (
+            <section>
+              <h2>
+                <a href={`/posts/${item.fields.slug}`}>{item.fields.title}</a>
+              </h2>
+              <p>by: {item.fields.author[0]}</p>
+              <p>
+                published on:{" "}
+                {new Date(item.fields.publishDate).toLocaleDateString()}
+              </p>
+            </section>
+          ))
+      }
+    </div>
+  </body>
+</html>
+
+<style>
+  * {
+    font-family: helvetica, sans-serif;
+  }
+  section {
+    background-color: gray;
+  }
+
+  .tags {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+  }
+
+  .tags p {
+    color: #3575a1;
+    background-color: #eaebeb;
+    padding: 0.4rem;
+  }
+
+  .first h2 {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .first p {
+    font-size: 2rem;
+  }
+
+  .columns {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .columns section {
+    width: 45%;
+  }
+</style>
